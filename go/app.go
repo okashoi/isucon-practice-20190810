@@ -338,7 +338,7 @@ LIMIT 10`, user.ID)
 
 	friendIds, err := getFriendIds(rows, err, user)
 
-	rows, err = db.Query(`SELECT * FROM entries  WHERE user_id IN(?) ORDER BY created_at DESC LIMIT 10`, strings.Join(friendIds, ","))
+	rows, err = db.Query(`SELECT * FROM entries  WHERE user_id IN(?) ORDER BY id DESC LIMIT 10`, strings.Join(friendIds, ","))
 	if err != sql.ErrNoRows {
 		checkErr(err)
 	}
@@ -356,7 +356,14 @@ LIMIT 10`, user.ID)
 	}
 	rows.Close()
 
-	rows, err = db.Query(`SELECT * FROM comments WHERE user_id IN(?) ORDER BY created_at DESC LIMIT 10`, strings.Join(friendIds, ","))
+	rows, err = db.Query(`SELECT * FROM comments 	
+JOIN entries  ON comments.entry_id = entries.id
+WHERE comments.user_id IN (?)
+AND (
+  entries.private = 0
+  OR entries.private = 1 
+  AND (entries.user_id = ? OR entries.user_id IN (?))
+) ORDER BY comments.id DESC LIMIT 10`,strings.Join(friendIds, ","), user.ID,strings.Join(friendIds, ","))
 	if err != sql.ErrNoRows {
 		checkErr(err)
 	}
@@ -364,18 +371,6 @@ LIMIT 10`, user.ID)
 	for rows.Next() {
 		c := Comment{}
 		checkErr(rows.Scan(&c.ID, &c.EntryID, &c.UserID, &c.Comment, &c.CreatedAt))
-
-		row := db.QueryRow(`SELECT * FROM entries WHERE id = ?`, c.EntryID)
-		var id, userID, private int
-		var body string
-		var createdAt time.Time
-		checkErr(row.Scan(&id, &userID, &private, &body, &createdAt))
-		entry := Entry{id, userID, private == 1, strings.SplitN(body, "\n", 2)[0], strings.SplitN(body, "\n", 2)[1], createdAt}
-		if entry.Private {
-			if !permitted(w, r, entry.UserID) {
-				continue
-			}
-		}
 		commentsOfFriends = append(commentsOfFriends, c)
 		if len(commentsOfFriends) >= 10 {
 			break
