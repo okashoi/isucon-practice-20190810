@@ -3,7 +3,7 @@
 <div class="row panel panel-primary" id="friends">
     <dl>
         {{ range .Friends }}
-        <dt class="friend-date">{{ .Related.Format "2006-01-02 15:04:05" }}</dt><dd class="friend-friend"><a href="/profile/{{ .AccountName }}">{{ .NickName }}</a></dd>
+        <dt class="friend-date">{{ .RelatedAt.Format "2006-01-02 15:04:05" }}</dt><dd class="friend-friend"><a href="/profile/{{ .AccountName }}">{{ .NickName }}</a></dd>
         {{ end }}
     </dl>
 </div>
