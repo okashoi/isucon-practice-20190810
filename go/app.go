@@ -362,10 +362,10 @@ FROM comments
 JOIN entries ON comments.entry_id = entries.id
 WHERE comments.user_id IN (?)
 AND (
-  entries.private = 0
-  OR entries.private = 1 
-  AND (entries.user_id = ? OR entries.user_id IN (?))
-) ORDER BY comments.id DESC LIMIT 10`,strings.Join(friendIds, ","), user.ID,strings.Join(friendIds, ","))
+  entries.private = 0 
+  OR (entries.private = 1 
+  AND (entries.user_id = ? OR entries.user_id IN (?)))
+) ORDER BY comments.id DESC LIMIT 10`,strings.Join(friendIds, ","), user.ID, strings.Join(friendIds, ","))
 	if err != sql.ErrNoRows {
 		checkErr(err)
 	}
