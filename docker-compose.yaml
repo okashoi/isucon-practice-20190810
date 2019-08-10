@@ -24,5 +24,6 @@ services:
         volumes:
           - "./sql/schema.sql:/docker-entrypoint-initdb.d/00-schema.sql"
           - "./sql/isucon5q.dev.sql:/docker-entrypoint-initdb.d/01-isucon5q.dev.sql"
+          - "./sql/create_user.sql:/docker-entrypoint-initdb.d/02-create_user.sql"
         ports:
           - "3306:3306"
