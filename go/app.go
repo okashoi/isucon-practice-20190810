@@ -724,7 +724,7 @@ func main() {
 	// pprof用のポート
 	// 使わなくなったら消す
 	go func() {
-		log.Println(http.ListenAndServe(":6060", nil))
+		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
 	host := os.Getenv("ISUCON5_DB_HOST")
