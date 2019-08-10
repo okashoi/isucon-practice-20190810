@@ -25,7 +25,7 @@ sub vcl_recv {
     # rewriting the request, etc.
 
     if (req.url ~ "/(js|fonts|css)/") {
-        return (hash);
+        unset req.http.Cookie;
     }
 }
 
@@ -34,13 +34,6 @@ sub vcl_backend_response {
     #
     # Here you clean the response headers, removing silly Set-Cookie headers
     # and other mistakes your backend does.
-
-    if (bereq.url ~ "/(js|fonts|css)/") {
-        unset beresp.http.set-cookie;
-        set beresp.http.cache-control = "public, max-age=3600";
-        set beresp.ttl = 3600s;
-        return (deliver);
-    }
 }
 
 sub vcl_deliver {
