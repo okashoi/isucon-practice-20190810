@@ -26,5 +26,6 @@ services:
           - "./sql/isucon5q.dev.sql:/docker-entrypoint-initdb.d/01-isucon5q.dev.sql"
           - "./sql/create_user.sql:/docker-entrypoint-initdb.d/02-create_user.sql"
           - "./etc/mysql/mysql.conf.d/99-additional.cnf:/etc/mysql/mysql.conf.d/99-additional.cnf"
+          - "./sql/99-index.sql:/docker-entrypoint-initdb.d/99-index.sql"
         ports:
           - "3306:3306"
