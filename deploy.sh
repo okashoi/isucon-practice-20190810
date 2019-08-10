@@ -3,7 +3,14 @@
 git pull
 cd /home/isucon/webapp/go && PATH=/home/isucon/.local/go/bin:$PATH GOPATH=/home/isucon/webapp/go make build
 
-sudo systemctl restart mysql
-sudo systemctl restart nginx.service
+sudo systemctl stop isuxi.go
+sudo systemctl stop varnish
+sudo systemctl stop mysql
+
+# ログ消す
+
 sudo systemctl daemon-reload
-sudo systemctl restart isuxi.go
+
+sudo systemctl start mysql
+sudo systemctl start varnish
+sudo systemctl start isuxi.go
