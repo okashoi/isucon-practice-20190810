@@ -336,19 +336,19 @@ LIMIT 10`, user.ID)
 	}
 	rows.Close()
 
-	rows, err = db.Query(`SELECT * FROM entries ORDER BY created_at DESC LIMIT 1000`)
+	friendIds, err := getFriendIds(rows, err, user)
+
+	rows, err = db.Query(`SELECT * FROM entries  WHERE user_id IN(?) ORDER BY created_at DESC LIMIT 10`, strings.Join(friendIds, ","))
 	if err != sql.ErrNoRows {
 		checkErr(err)
 	}
 	entriesOfFriends := make([]Entry, 0, 10)
+
 	for rows.Next() {
 		var id, userID, private int
 		var body string
 		var createdAt time.Time
 		checkErr(rows.Scan(&id, &userID, &private, &body, &createdAt))
-		if !isFriend(w, r, userID) {
-			continue
-		}
 		entriesOfFriends = append(entriesOfFriends, Entry{id, userID, private == 1, strings.SplitN(body, "\n", 2)[0], strings.SplitN(body, "\n", 2)[1], createdAt})
 		if len(entriesOfFriends) >= 10 {
 			break
@@ -364,9 +364,7 @@ LIMIT 10`, user.ID)
 	for rows.Next() {
 		c := Comment{}
 		checkErr(rows.Scan(&c.ID, &c.EntryID, &c.UserID, &c.Comment, &c.CreatedAt))
-		if !isFriend(w, r, c.UserID) {
-			continue
-		}
+
 		row := db.QueryRow(`SELECT * FROM entries WHERE id = ?`, c.EntryID)
 		var id, userID, private int
 		var body string
@@ -411,11 +409,11 @@ LIMIT 10`, user.ID)
 	rows.Close()
 
 	rows, err = db.Query(`SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) AS updated
-FROM footprints
-WHERE user_id = ?
-GROUP BY user_id, owner_id, DATE(created_at)
-ORDER BY updated DESC
-LIMIT 10`, user.ID)
+	FROM footprints
+	WHERE user_id = ?
+	GROUP BY user_id, owner_id, DATE(created_at)
+	ORDER BY updated DESC
+	LIMIT 10`, user.ID)
 	if err != sql.ErrNoRows {
 		checkErr(err)
 	}
@@ -439,6 +437,32 @@ LIMIT 10`, user.ID)
 	}{
 		*user, prof, entries, commentsForMe, entriesOfFriends, commentsOfFriends, friends, footprints,
 	})
+}
+
+func getFriendIds(rows *sql.Rows, err error, user *User) ([]string, error) {
+	// 自分がフレンドまたはフレンドにされている人を一覧にする
+	var friends []string
+	rows, err = db.Query(`SELECT another FROM relations WHERE  one =?`, user.ID)
+	if err != sql.ErrNoRows {
+		checkErr(err)
+	}
+	for rows.Next() {
+		var friendId string
+		checkErr(rows.Scan(&friendId))
+		friends = append(friends, friendId)
+	}
+	rows.Close()
+	rows, err = db.Query(`SELECT one FROM relations WHERE  another =?`, user.ID)
+	if err != sql.ErrNoRows {
+		checkErr(err)
+	}
+	for rows.Next() {
+		var friendId string
+		checkErr(rows.Scan(&friendId))
+		friends = append(friends, friendId)
+	}
+	rows.Close()
+	return friends, err
 }
 
 func GetProfile(w http.ResponseWriter, r *http.Request) {
