@@ -355,7 +355,7 @@ LIMIT 10`, user.ID)
 		}
 	}
 	rows.Close()
-	rows, err = db.Query(`SELECT * FROM comments WHERE comments.user_id IN (?) ORDER BY created_at DESC LIMIT 1000`, strings.Join(friendIds, ","), user.ID)
+	rows, err = db.Query(`SELECT * FROM comments WHERE comments.user_id IN (?) ORDER BY created_at DESC LIMIT 1000`, strings.Join(friendIds, ","))
 //	rows, err = db.Query(`SELECT
 //comments.id, comments.entry_id, comments.user_id,comments.comment, comments.created_at
 //FROM comments
@@ -373,7 +373,7 @@ LIMIT 10`, user.ID)
 	for rows.Next() {
 		c := Comment{}
 		checkErr(rows.Scan(&c.ID, &c.EntryID, &c.UserID, &c.Comment, &c.CreatedAt))
-		
+
 		row := db.QueryRow(`SELECT * FROM entries WHERE id = ?`, c.EntryID)
 		var id, userID, private int
 		var body string
