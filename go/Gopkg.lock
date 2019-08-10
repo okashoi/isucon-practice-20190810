@@ -2,45 +2,12 @@
 
 
 [[projects]]
-  digest = "1:b95738a1e6ace058b5b8544303c0871fc01d224ef0d672f778f696265d0f2917"
-  name = "github.com/chzyer/readline"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "62c6fe6193755f722b8b8788aa7357be55a50ff1"
-  version = "v1.4"
-
-[[projects]]
   digest = "1:ec6f9bf5e274c833c911923c9193867f3f18788c461f76f05f62bb1510e0ae65"
   name = "github.com/go-sql-driver/mysql"
   packages = ["."]
   pruneopts = "UT"
   revision = "72cd26f257d44c1114970e19afddcd812016007e"
   version = "v1.4.1"
-
-[[projects]]
-  branch = "master"
-  digest = "1:c5423ba01403c2e47cebc95158608245bbd9e0d6c470dfe9dcc156b60c03326d"
-  name = "github.com/google/pprof"
-  packages = [
-    ".",
-    "driver",
-    "internal/binutils",
-    "internal/driver",
-    "internal/elfexec",
-    "internal/graph",
-    "internal/measurement",
-    "internal/plugin",
-    "internal/report",
-    "internal/symbolizer",
-    "internal/symbolz",
-    "internal/transport",
-    "profile",
-    "third_party/d3",
-    "third_party/d3flamegraph",
-    "third_party/svgpan",
-  ]
-  pruneopts = "UT"
-  revision = "34ac40c74b706e20e809986988342a0b2a554a0b"
 
 [[projects]]
   digest = "1:c79fb010be38a59d657c48c6ba1d003a8aa651fa56b579d959d74573b7dff8e1"
@@ -75,14 +42,6 @@
   version = "v1.2.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:3e658fb4b055816998a967aab8abe0966ce1cfcbb42c2f66a22c7c19568aa1d2"
-  name = "github.com/ianlancetaylor/demangle"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "5e5cf60278f657d30daa329dd0e7e893b6b8f027"
-
-[[projects]]
   digest = "1:c25289f43ac4a68d88b02245742347c94f1e108c534dda442188015ff80669b3"
   name = "google.golang.org/appengine"
   packages = ["cloudsql"]
@@ -95,7 +54,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/go-sql-driver/mysql",
-    "github.com/google/pprof",
     "github.com/gorilla/context",
     "github.com/gorilla/mux",
     "github.com/gorilla/sessions",
