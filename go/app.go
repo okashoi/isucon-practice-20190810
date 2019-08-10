@@ -356,8 +356,10 @@ LIMIT 10`, user.ID)
 	}
 	rows.Close()
 
-	rows, err = db.Query(`SELECT * FROM comments 	
-JOIN entries  ON comments.entry_id = entries.id
+	rows, err = db.Query(`SELECT
+comments.id, comments.entry_id, comments.user_id,comments.comment, comments.created_at
+FROM comments 	
+JOIN entries ON comments.entry_id = entries.id
 WHERE comments.user_id IN (?)
 AND (
   entries.private = 0
