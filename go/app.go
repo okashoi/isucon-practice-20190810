@@ -700,37 +700,95 @@ LIMIT 50`, user.ID)
 	rows.Close()
 	render(w, r, http.StatusOK, "footprints.html", struct{ Footprints []Footprint }{footprints})
 }
+
+type MyFriend struct {
+	AccountName string
+	NickName    string
+	RelatedAt   *time.Time
+}
+
+func fetchMyFriends(userId int) ([]MyFriend, error) {
+	var friends []MyFriend
+
+	// 自分がフレンズだと思ってるやつら
+	rows, err := db.Query(`
+		SELECT u.account_name, u.nick_name, r.created_at
+		FROM relations as r
+		INNER JOIN users as u ON u.id = r.another
+		WHERE r.one = ?
+	`, userId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	for rows.Next() {
+		var friendAccountName string
+		var friendNickName    string
+		var relatedAt         *time.Time
+		if err := rows.Scan(&friendAccountName, &friendNickName, &relatedAt); err != nil {
+			return nil, err
+		}
+		friends = append(friends, MyFriend{
+			AccountName: friendAccountName,
+			NickName:    friendNickName,
+			RelatedAt:   relatedAt,
+		})
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
+	// フレンズだと思ってくれているやつら
+	rows, err = db.Query(`
+		SELECT u.account_name, u.nick_name, r.created_at
+		FROM relations as r
+		INNER JOIN users as u ON u.id = r.one
+		WHERE r.another = ?
+	`, userId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	for rows.Next() {
+		var friendAccountName string
+		var friendNickName    string
+		var relatedAt         *time.Time
+		if err := rows.Scan(&friendAccountName, &friendNickName, &relatedAt); err != nil {
+			return nil, err
+		}
+		friends = append(friends, MyFriend{
+			AccountName: friendAccountName,
+			NickName:    friendNickName,
+			RelatedAt:   relatedAt,
+		})
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
+	return friends, nil
+}
+
 func GetFriends(w http.ResponseWriter, r *http.Request) {
 	if !authenticated(w, r) {
 		return
 	}
 
 	user := getCurrentUser(w, r)
-	rows, err := db.Query(`SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC`, user.ID, user.ID)
-	if err != sql.ErrNoRows {
-		checkErr(err)
+	friends, err := fetchMyFriends(user.ID)
+	if err != nil {
+		panic(err)
 	}
-	friendsMap := make(map[int]time.Time)
-	for rows.Next() {
-		var id, one, another int
-		var createdAt time.Time
-		checkErr(rows.Scan(&id, &one, &another, &createdAt))
-		var friendID int
-		if one == user.ID {
-			friendID = another
-		} else {
-			friendID = one
-		}
-		if _, ok := friendsMap[friendID]; !ok {
-			friendsMap[friendID] = createdAt
-		}
-	}
-	rows.Close()
-	friends := make([]Friend, 0, len(friendsMap))
-	for key, val := range friendsMap {
-		friends = append(friends, Friend{key, val})
-	}
-	render(w, r, http.StatusOK, "friends.html", struct{ Friends []Friend }{friends})
+
+	render(w, r, http.StatusOK, "friends.html", struct{ Friends []MyFriend }{friends})
 }
 
 func PostFriends(w http.ResponseWriter, r *http.Request) {
