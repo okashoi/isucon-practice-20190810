@@ -9,9 +9,9 @@ sudo systemctl stop varnish
 sudo systemctl stop mysql
 
 # ログ消す
-sudo rm /var/log/mysql/error.log
-sudo rm /var/log/mysql/mysql-slow.log
-sudo rm /var/log/varnish/varnishncsa.log
+sudo rm -f /var/log/mysql/error.log
+sudo rm -f /var/log/mysql/mysql-slow.log
+sudo rm -f /var/log/varnish/varnishncsa.log
 
 sudo systemctl daemon-reload
 
