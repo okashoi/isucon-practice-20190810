@@ -336,7 +336,7 @@ LIMIT 10`, user.ID)
 	}
 	rows.Close()
 
-	friendIds, err := getFriendIds(rows, err, user)
+	friendIds, err := getFriendIds(user.ID)
 
 	rows, err = db.Query(`SELECT * FROM entries  WHERE user_id IN(?) ORDER BY id DESC LIMIT 10`, strings.Join(friendIds, ","))
 	if err != sql.ErrNoRows {
@@ -356,16 +356,16 @@ LIMIT 10`, user.ID)
 	}
 	rows.Close()
 	rows, err = db.Query(`SELECT * FROM comments ORDER BY created_at DESC LIMIT 1000`)
-//	rows, err = db.Query(`SELECT
-//comments.id, comments.entry_id, comments.user_id,comments.comment, comments.created_at
-//FROM comments
-//JOIN entries ON comments.entry_id = entries.id
-//WHERE comments.user_id IN (?)
-//AND (
-//  entries.private = 0
-//  OR (entries.private = 1
-//  AND (entries.user_id = ? OR entries.user_id IN (?)))
-//) ORDER BY comments.id DESC LIMIT 10`,strings.Join(friendIds, ","), user.ID, strings.Join(friendIds, ","))
+	//	rows, err = db.Query(`SELECT
+	//comments.id, comments.entry_id, comments.user_id,comments.comment, comments.created_at
+	//FROM comments
+	//JOIN entries ON comments.entry_id = entries.id
+	//WHERE comments.user_id IN (?)
+	//AND (
+	//  entries.private = 0
+	//  OR (entries.private = 1
+	//  AND (entries.user_id = ? OR entries.user_id IN (?)))
+	//) ORDER BY comments.id DESC LIMIT 10`,strings.Join(friendIds, ","), user.ID, strings.Join(friendIds, ","))
 	if err != sql.ErrNoRows {
 		checkErr(err)
 	}
@@ -394,31 +394,6 @@ LIMIT 10`, user.ID)
 	}
 	rows.Close()
 
-	rows, err = db.Query(`SELECT * FROM relations WHERE one = ? OR another = ? ORDER BY created_at DESC`, user.ID, user.ID)
-	if err != sql.ErrNoRows {
-		checkErr(err)
-	}
-	friendsMap := make(map[int]time.Time)
-	for rows.Next() {
-		var id, one, another int
-		var createdAt time.Time
-		checkErr(rows.Scan(&id, &one, &another, &createdAt))
-		var friendID int
-		if one == user.ID {
-			friendID = another
-		} else {
-			friendID = one
-		}
-		if _, ok := friendsMap[friendID]; !ok {
-			friendsMap[friendID] = createdAt
-		}
-	}
-	friends := make([]Friend, 0, len(friendsMap))
-	for key, val := range friendsMap {
-		friends = append(friends, Friend{key, val})
-	}
-	rows.Close()
-
 	rows, err = db.Query(`SELECT user_id, owner_id, DATE(created_at) AS date, MAX(created_at) AS updated
 	FROM footprints
 	WHERE user_id = ?
@@ -443,17 +418,17 @@ LIMIT 10`, user.ID)
 		CommentsForMe     []Comment
 		EntriesOfFriends  []Entry
 		CommentsOfFriends []Comment
-		Friends           []Friend
+		FriendCount       int
 		Footprints        []Footprint
 	}{
-		*user, prof, entries, commentsForMe, entriesOfFriends, commentsOfFriends, friends, footprints,
+		*user, prof, entries, commentsForMe, entriesOfFriends, commentsOfFriends, len(friendIds), footprints,
 	})
 }
 
-func getFriendIds(rows *sql.Rows, err error, user *User) ([]string, error) {
+func getFriendIds(userId int) ([]string, error) {
 	// 自分がフレンドまたはフレンドにされている人を一覧にする
 	var friends []string
-	rows, err = db.Query(`SELECT another FROM relations WHERE  one =?`, user.ID)
+	rows, err := db.Query(`SELECT another FROM relations WHERE  one =?`, userId)
 	if err != sql.ErrNoRows {
 		checkErr(err)
 	}
@@ -463,7 +438,7 @@ func getFriendIds(rows *sql.Rows, err error, user *User) ([]string, error) {
 		friends = append(friends, friendId)
 	}
 	rows.Close()
-	rows, err = db.Query(`SELECT one FROM relations WHERE  another =?`, user.ID)
+	rows, err = db.Query(`SELECT one FROM relations WHERE  another =?`, userId)
 	if err != sql.ErrNoRows {
 		checkErr(err)
 	}
@@ -727,8 +702,8 @@ func fetchMyFriends(userId int) ([]MyFriend, error) {
 
 	for rows.Next() {
 		var friendAccountName string
-		var friendNickName    string
-		var relatedAt         *time.Time
+		var friendNickName string
+		var relatedAt *time.Time
 		if err := rows.Scan(&friendAccountName, &friendNickName, &relatedAt); err != nil {
 			return nil, err
 		}
@@ -759,8 +734,8 @@ func fetchMyFriends(userId int) ([]MyFriend, error) {
 
 	for rows.Next() {
 		var friendAccountName string
-		var friendNickName    string
-		var relatedAt         *time.Time
+		var friendNickName string
+		var relatedAt *time.Time
 		if err := rows.Scan(&friendAccountName, &friendNickName, &relatedAt); err != nil {
 			return nil, err
 		}

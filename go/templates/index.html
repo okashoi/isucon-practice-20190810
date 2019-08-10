@@ -14,7 +14,7 @@
       <dt>誕生日</dt><dd id="prof-birthday">{{ if .Birthday.Valid }}{{ .Birthday.Time.Format "1月2日" }}{{else}}未入力{{end}}</dd>
       <dt>住んでいる県</dt><dd id="prof-pref">{{ if .Pref }}{{ .Pref }}{{else}}未入力{{end}}</dd>
       {{end}}
-      <dt>友だちの人数</dt><dd id="prof-friends"><a href="/friends">{{ len .Friends }}人</a></dd>
+      <dt>友だちの人数</dt><dd id="prof-friends"><a href="/friends">{{ .FriendCount }}人</a></dd>
     </dl>
   </div>
 
