@@ -1,0 +1,12 @@
+[Unit]
+Description=isuxi-go
+After=syslog.target
+
+[Service]
+WorkingDirectory=/home/isucon/webapp/go
+ExecStart=/home/isucon/webapp/go/server
+Environment="ISUCON5_DB_USER=isucon"
+Environment="ISUCON5_DB_PASSWORD=isucon"
+
+[Install]
+WantedBy=multi-user.target
