@@ -1,6 +1,9 @@
 SET @account_name='tagomoris', @nick_name='モリス', @email='moris@tagomor.is', @password='hogepos';
 
 begin;
+delete from salts where user_id = (select id from users where email = @email);
+delete from users where email = @email;
+
 INSERT INTO users (account_name,nick_name,email,passhash) VALUES (@account_name,@nick_name,@email,'');
 
 INSERT INTO salts (user_id,salt) VALUES (LAST_INSERT_ID(),FLOOR(MICROSECOND(NOW(6)) * RAND()));

@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+    reverse_proxy:
+        build:
+            context: varnish
+        ports:
+          - "80:80"
+    backend:
+        build:
+            context: go
+        command: "./server"
+        environment:
+            GOPATH: "/go"
+            ISUCON5_DB_HOST: "db"
+    db:
+        image: mysql:5.7
+        environment:
+            MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+            MYSQL_ROOT_PASSWORD: ""
+            MYSQL_USER: "isucon"
+            MYSQL_PASSWORD: "isucon"
+            MYSQL_DATABASE: "isucon5q"
+        volumes:
+          - "./sql/schema.sql:/docker-entrypoint-initdb.d/00-schema.sql"
+          - "./sql/isucon5q.dev.sql:/docker-entrypoint-initdb.d/01-isucon5q.dev.sql"
+        ports:
+          - "3306:3306"
