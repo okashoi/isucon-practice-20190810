@@ -23,6 +23,10 @@ sub vcl_recv {
     #
     # Typically you clean up the request here, removing cookies you don't need,
     # rewriting the request, etc.
+
+    if (req.url ~ "/(js|fonts|css)/") {
+        return (hash);
+    }
 }
 
 sub vcl_backend_response {
@@ -30,6 +34,13 @@ sub vcl_backend_response {
     #
     # Here you clean the response headers, removing silly Set-Cookie headers
     # and other mistakes your backend does.
+
+    if (bereq.url ~ "/(js|fonts|css)/") {
+        unset beresp.http.set-cookie;
+        set beresp.http.cache-control = "public, max-age=3600";
+        set beresp.ttl = 3600s;
+        return (deliver);
+    }
 }
 
 sub vcl_deliver {
