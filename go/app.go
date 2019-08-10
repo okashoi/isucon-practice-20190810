@@ -336,9 +336,9 @@ LIMIT 10`, user.ID)
 	}
 	rows.Close()
 
-	friendIds, err := getFriendIds(rows, err, user)
-
-	rows, err = db.Query(`SELECT * FROM entries  WHERE user_id IN(?) ORDER BY id DESC LIMIT 10`, strings.Join(friendIds, ","))
+	friendIds, err := getFriendIds(user)
+	friendIdsString := strings.Join(friendIds, ",")
+	rows, err = db.Query(`SELECT * FROM entries  WHERE user_id IN(?) ORDER BY id DESC LIMIT 10`, friendIdsString)
 	if err != sql.ErrNoRows {
 		checkErr(err)
 	}
@@ -355,7 +355,7 @@ LIMIT 10`, user.ID)
 		}
 	}
 	rows.Close()
-	rows, err = db.Query(`SELECT * FROM comments WHERE comments.user_id IN (?) ORDER BY created_at DESC LIMIT 1000`, strings.Join(friendIds, ","))
+	rows, err = db.Query(`SELECT * FROM comments WHERE comments.user_id IN (?) ORDER BY created_at DESC LIMIT 1000`, friendIdsString)
 //	rows, err = db.Query(`SELECT
 //comments.id, comments.entry_id, comments.user_id,comments.comment, comments.created_at
 //FROM comments
@@ -448,10 +448,10 @@ LIMIT 10`, user.ID)
 	})
 }
 
-func getFriendIds(rows *sql.Rows, err error, user *User) ([]string, error) {
+func getFriendIds(user *User) ([]string, error) {
 	// 自分がフレンドまたはフレンドにされている人を一覧にする
 	var friends []string
-	rows, err = db.Query(`SELECT another FROM relations WHERE  one =?`, user.ID)
+	rows, err := db.Query(`SELECT another FROM relations WHERE  one =?`, user.ID)
 	if err != sql.ErrNoRows {
 		checkErr(err)
 	}
