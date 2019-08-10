@@ -155,12 +155,23 @@ func getUserFromAccount(w http.ResponseWriter, name string) *User {
 
 func isFriend(w http.ResponseWriter, r *http.Request, anotherID int) bool {
 	session := getSession(w, r)
-	id := session.Values["user_id"]
-	row := db.QueryRow(`SELECT COUNT(1) AS cnt FROM relations WHERE (one = ? AND another = ?) OR (one = ? AND another = ?)`, id, anotherID, anotherID, id)
-	cnt := new(int)
-	err := row.Scan(cnt)
-	checkErr(err)
-	return *cnt > 0
+	id, ok := session.Values["user_id"].(int)
+	if !ok {
+		panic("session user_id is not int")
+	}
+
+	friends, err := fetchMyFriends(id)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, f := range friends {
+		if f.UserId == anotherID {
+			return true
+		}
+	}
+
+	return false
 }
 
 func isFriendAccount(w http.ResponseWriter, r *http.Request, name string) bool {
@@ -702,6 +713,7 @@ LIMIT 50`, user.ID)
 }
 
 type MyFriend struct {
+	UserId      int
 	AccountName string
 	NickName    string
 	RelatedAt   *time.Time
@@ -712,7 +724,7 @@ func fetchMyFriends(userId int) ([]MyFriend, error) {
 
 	// 自分がフレンズだと思ってるやつら
 	rows, err := db.Query(`
-		SELECT u.account_name, u.nick_name, r.created_at
+		SELECT u.id, u.account_name, u.nick_name, r.created_at
 		FROM relations as r
 		INNER JOIN users as u ON u.id = r.another
 		WHERE r.one = ?
@@ -726,13 +738,15 @@ func fetchMyFriends(userId int) ([]MyFriend, error) {
 	}
 
 	for rows.Next() {
+		var friendUserId int
 		var friendAccountName string
-		var friendNickName    string
-		var relatedAt         *time.Time
-		if err := rows.Scan(&friendAccountName, &friendNickName, &relatedAt); err != nil {
+		var friendNickName string
+		var relatedAt *time.Time
+		if err := rows.Scan(&friendUserId, &friendAccountName, &friendNickName, &relatedAt); err != nil {
 			return nil, err
 		}
 		friends = append(friends, MyFriend{
+			UserId:      friendUserId,
 			AccountName: friendAccountName,
 			NickName:    friendNickName,
 			RelatedAt:   relatedAt,
@@ -744,7 +758,7 @@ func fetchMyFriends(userId int) ([]MyFriend, error) {
 
 	// フレンズだと思ってくれているやつら
 	rows, err = db.Query(`
-		SELECT u.account_name, u.nick_name, r.created_at
+		SELECT u.id, u.account_name, u.nick_name, r.created_at
 		FROM relations as r
 		INNER JOIN users as u ON u.id = r.one
 		WHERE r.another = ?
@@ -758,13 +772,15 @@ func fetchMyFriends(userId int) ([]MyFriend, error) {
 	}
 
 	for rows.Next() {
+		var friendUserId int
 		var friendAccountName string
-		var friendNickName    string
-		var relatedAt         *time.Time
-		if err := rows.Scan(&friendAccountName, &friendNickName, &relatedAt); err != nil {
+		var friendNickName string
+		var relatedAt *time.Time
+		if err := rows.Scan(&friendUserId, &friendAccountName, &friendNickName, &relatedAt); err != nil {
 			return nil, err
 		}
 		friends = append(friends, MyFriend{
+			UserId:      friendUserId,
 			AccountName: friendAccountName,
 			NickName:    friendNickName,
 			RelatedAt:   relatedAt,
